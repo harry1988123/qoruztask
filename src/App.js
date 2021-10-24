@@ -1,23 +1,58 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import "./App.css";
 import { AvatarGenerator } from "random-avatar-generator";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Container } from './Container';
+import { Container } from "./Container";
+import { 
+  setCompletedTodo,
+  setPendingTodo, 
+  setRemoveTodo
+} from "./Slices/appSlice";
+import { Table } from "antd";
+import "antd/dist/antd.css";
 
 function App() {
   const generator = new AvatarGenerator();
-  console.log(generator.generateRandomAvatar());
-  const onChangeValue = (e) => {
-    console.log(e.target.value);
-  };
+  const onChangeValue = (e) => { 
+    dispatch(setRemoveTodo({id:e.target.value}))
+    dispatch(setCompletedTodo());
+    dispatch(setPendingTodo()); 
+  };  
+  const triggerText = "Add task"; 
+  const completedTodo =  useSelector(x => x.todoList.completedTodo);
+  const pendingTodo = useSelector(x => x.todoList.pendingTodo); 
+  
+  const dispatch = useDispatch();
 
-  const onSubmit = (event) => {
-    event.preventDefault(event);
+  useEffect(() => { 
+    dispatch(setCompletedTodo());
+    dispatch(setPendingTodo()); 
+  }, []);
 
-  }
-  const triggerText = 'Add task';
-  const [startDate, setStartDate] = useState(new Date());
+  const columns = [
+    {
+      title: "Id",
+      dataIndex: "id",
+    },
+    {
+      title: "Name",
+      dataIndex: "name",
+    },
+    {
+      title: "Date",
+      dataIndex: "Date",
+    },
+    {
+      title: "status",
+      dataIndex: "status",
+    },
+    {
+      title: "Action",
+      key: "operation",
+      render: (e) => { return e["status"] === "Pending" ?  <input type='radio' value={e.id} /> : <span aria-hidden="true">✔</span> }
+    },
+  ];
 
   return (
     <div className="App">
@@ -32,31 +67,28 @@ function App() {
       <hr />
       <section>
         <div className="todolist" onChange={onChangeValue}>
-          <input type="radio" value="Task 1" name="Task" /> Task 1
-          <input type="radio" value="Sub Task 1" /> SubTask 1
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-          />
-          <input type="radio" value="Sub Task 1" /> SubTask 2
-          <DatePicker
-            selected={startDate}
-            onChange={(date) => setStartDate(date)}
-          />
+          {pendingTodo ? (
+            <Table columns={columns} dataSource={pendingTodo} size="middle" />
+          ) : (
+            <div></div>
+          )}
         </div>
         <hr />
         <div className="completedTodo">
           <h2>Completed Tasks</h2>
-          <div style={{display:'flex', alignItems:'center', justifyContent:'center'}}>
-            <span aria-hidden="true">✔</span>
-            <h3>Task 2</h3>
+          <div>
+            {completedTodo ? (
+            <Table columns={columns} dataSource={completedTodo} size="middle" />
+          ) : (
+            <div></div>
+          )}
           </div>
         </div>
-        <hr/>
+        <hr />
         <div className="addTodo">
           <h3>Add a task</h3>
           {/* <img src="https://www.gstatic.com/tasks/task-add-accent-light.svg"/> */}
-          <Container triggerText={triggerText} onSubmit={onSubmit} />
+          <Container triggerText={triggerText} />
         </div>
       </section>
     </div>
